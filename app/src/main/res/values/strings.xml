@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Internet Speed Tester</string>
+    <string name="retry_button">Retry Button</string>
+    <string name="title">@string/app_name</string>
+    <string name="upload_speed">Upload Speed</string>
+    <string name="download_speed">Download Speed</string>
+    <string name="general_error_message">Something is not right</string>
+    <string name="internet_not_connected">Looks like we are not connected to internet</string>
+</resources>

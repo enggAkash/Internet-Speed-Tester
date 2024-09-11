@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingHorizontal="20dp"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/titleTv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:gravity="center"
+        android:text="@string/title"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:textSize="22sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/contentGuideLine"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.4" />
+
+    <TextView
+        android:id="@+id/downloadSpeedTv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:maxLines="2"
+        android:padding="@dimen/download_upload_value_padding"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        app:layout_constraintEnd_toStartOf="@id/retryIv"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/contentGuideLine"
+        tools:text="85Mbps" />
+
+    <ImageView
+        android:id="@+id/retryIv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/retry_button"
+        android:minWidth="@dimen/retry_icon_min_width"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="@id/downloadUploadBottomBarrier"
+        app:layout_constraintEnd_toStartOf="@id/uploadSpeedTv"
+        app:layout_constraintStart_toEndOf="@id/downloadSpeedTv"
+        app:layout_constraintTop_toBottomOf="@id/contentGuideLine"
+        tools:src="@drawable/ic_refresh" />
+
+    <TextView
+        android:id="@+id/uploadSpeedTv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:maxLines="2"
+        android:padding="@dimen/download_upload_value_padding"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/retryIv"
+        app:layout_constraintTop_toBottomOf="@id/contentGuideLine"
+        tools:text="85Mbps" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/downloadUploadBottomBarrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="downloadSpeedTv,retryIv,uploadSpeedTv" />
+
+    <TextView
+        android:id="@+id/downloadSpeedTitleTv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="@dimen/download_upload_title_padding"
+        android:text="@string/download_speed"
+        android:textSize="@dimen/download_upload_text_size"
+        app:layout_constraintEnd_toStartOf="@id/uploadSpeedTitleTv"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/downloadUploadBottomBarrier" />
+
+    <TextView
+        android:id="@+id/uploadSpeedTitleTv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="@dimen/download_upload_title_padding"
+        android:text="@string/upload_speed"
+        android:textSize="@dimen/download_upload_text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/downloadSpeedTitleTv"
+        app:layout_constraintTop_toBottomOf="@id/downloadUploadBottomBarrier" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/downloadUploadTitleBottomBarrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="downloadSpeedTitleTv,uploadSpeedTitleTv" />
+
+    <ProgressBar
+        android:id="@+id/loader"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/loader_height"
+        android:indeterminate="true"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/downloadUploadTitleBottomBarrier"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/errorTv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/holo_red_light"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/loader"
+        tools:text="Something is not right"
+        tools:visibility="visible" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
