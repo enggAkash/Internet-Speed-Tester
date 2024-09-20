@@ -5,7 +5,6 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingHorizontal="20dp"
     tools:context=".MainActivity">
 
     <TextView
@@ -14,6 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"
         android:gravity="center"
+        android:paddingHorizontal="20dp"
         android:text="@string/title"
         android:textAppearance="@style/TextAppearance.AppCompat.Title"
         android:textSize="22sp"
@@ -122,6 +122,7 @@
         android:id="@+id/errorTv"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
         android:textColor="@android:color/holo_red_light"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"

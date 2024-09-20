@@ -17,10 +17,9 @@ import com.engineerakash.internetspeedchecker.util.UPLOAD_ENDPOINT
 import com.engineerakash.internetspeedchecker.util.UPLOAD_FILE_SIZE_IN_MB
 import com.engineerakash.internetspeedchecker.util.uptoFixDecimalIfDecimalValueIsZero
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
@@ -70,6 +69,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun setupListenersAndObservers() {
         binding.retryIv.setOnClickListener {
             binding.errorTv.visibility = View.GONE
@@ -82,7 +82,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         uploadSpeedFlow
-            .debounce(100)
             .onEach {
                 Log.d(TAG, "setupListenersAndObservers: uploadSpeedFlow $it")
 
