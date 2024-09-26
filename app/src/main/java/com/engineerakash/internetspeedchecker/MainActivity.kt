@@ -16,6 +16,7 @@ import com.engineerakash.internetspeedchecker.util.NetworkUtil
 import com.engineerakash.internetspeedchecker.util.UPLOAD_ENDPOINT
 import com.engineerakash.internetspeedchecker.util.UPLOAD_FILE_SIZE_IN_MB
 import com.engineerakash.internetspeedchecker.util.uptoFixDecimalIfDecimalValueIsZero
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -39,12 +40,17 @@ class MainActivity : AppCompatActivity() {
     private var isDownloadTestInProgress = false
     private var isUploadTestInProgress = false
 
-    private var isTestInProgress = isDownloadTestInProgress || isUploadTestInProgress
+    private val isTestInProgress: Boolean
+        get() = isDownloadTestInProgress || isUploadTestInProgress
 
     private var uploadJob: Job? = null
     private var downloadJob: Job? = null
 
     private var uploadSpeedFlow: MutableSharedFlow<Double> = MutableSharedFlow<Double>()
+    private var downloadSpeedFlow: MutableSharedFlow<Double> = MutableSharedFlow<Double>()
+
+    private val mainScope = CoroutineScope(Dispatchers.Main)
+    private val ioScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,6 +87,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        downloadSpeedFlow
+            .onEach {
+                Log.d(TAG, "setupListenersAndObservers: downloadSpeedFlow $it")
+
+                binding.downloadSpeedTv.text = if (it > (1024 * 1024)) {
+                    "${(it / (1024 * 1024)).uptoFixDecimalIfDecimalValueIsZero()} Gbps"
+                } else if (it > 1024) {
+                    "${(it / 1024).uptoFixDecimalIfDecimalValueIsZero()} Mbps"
+                } else {
+                    "${it.uptoFixDecimalIfDecimalValueIsZero()} Kbps"
+                }
+            }
+            .launchIn(lifecycleScope)
+
         uploadSpeedFlow
             .onEach {
                 Log.d(TAG, "setupListenersAndObservers: uploadSpeedFlow $it")
@@ -98,11 +118,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun startTest() {
 
-        binding.retryIv.setImageResource(R.drawable.ic_pause_circle_outline)
-        binding.loader.visibility = View.VISIBLE
-
         testDownloadSpeed(DOWNLOAD_ENDPOINT) { speed ->
             isDownloadTestInProgress = true
+            showHideLoader()
 
             binding.downloadSpeedTv.text = if (speed > (1024 * 1024)) {
                 "${(speed / (1024 * 1024)).uptoFixDecimalIfDecimalValueIsZero()} Gbps"
@@ -113,8 +131,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        uploadJob = lifecycleScope.launch((Dispatchers.IO)) {
+        uploadJob = ioScope.launch {
             isUploadTestInProgress = true
+            showHideLoader()
 
             val fileToUpload =
                 FileUtil.createDummyFile(this@MainActivity, "testfile.txt", UPLOAD_FILE_SIZE_IN_MB)
@@ -136,8 +155,8 @@ class MainActivity : AppCompatActivity() {
         isDownloadTestInProgress = false
         isUploadTestInProgress = false
 
-        binding.retryIv.setImageResource(R.drawable.ic_refresh)
-        binding.loader.visibility = View.GONE
+        showHideLoader()
+
         uploadJob?.cancel()
         downloadJob?.cancel()
     }
@@ -145,7 +164,7 @@ class MainActivity : AppCompatActivity() {
     // Function to test download speed
     private fun testDownloadSpeed(url: String, onSpeedCalculated: (Double) -> Unit) {
         // Using Coroutines to perform the download on a background thread
-        downloadJob = lifecycleScope.launch(Dispatchers.IO) {
+        downloadJob = ioScope.launch {
             try {
                 val urlConnection = URL(url).openConnection()
                 val contentLength = urlConnection.contentLength
@@ -157,15 +176,35 @@ class MainActivity : AppCompatActivity() {
                         val buffer = ByteArray(1024)
                         var bytesRead: Int
 
+                        val downloadStartTime = System.currentTimeMillis()
+
                         //todo Calculate download speed (in Kbps) here
 
                         while (input.read(buffer).also { bytesRead = it } != -1) {
-                            totalBytesRead += bytesRead
-
                             if (!isActive) {
                                 //this job has been cancelled
                                 return@launch
                             }
+
+                            totalBytesRead += bytesRead
+
+
+                            // Calculate upload speed in Kbps (Bytes to Kbps conversion)
+                            val timeElapsedSinceStart =
+                                System.currentTimeMillis() - downloadStartTime
+                            val currentSpeedKbps =
+                                (totalBytesRead / 1024.0) / (timeElapsedSinceStart / 1000.0)
+
+                            Log.d(
+                                TAG,
+                                "testDownloadSpeed: downloadSpeedFlow currentSpeedKbps $currentSpeedKbps"
+                            )
+                            Log.d(
+                                TAG,
+                                "testDownloadSpeed: downloadSpeedFlow totalBytesRead/contentLength $totalBytesRead/$contentLength"
+                            )
+
+                            downloadSpeedFlow.emit(currentSpeedKbps)
                         }
                     }
                 }
@@ -178,13 +217,13 @@ class MainActivity : AppCompatActivity() {
                     onSpeedCalculated(speedKbps)
 
                     isDownloadTestInProgress = false
-                    binding.retryIv.setImageResource(R.drawable.ic_refresh)
-                    binding.loader.visibility = View.GONE
+                    showHideLoader()
                 }
 
             } catch (e: Exception) {
                 e.printStackTrace()
 
+                isDownloadTestInProgress = false
                 withContext(Dispatchers.Main) {
                     showErrorCase(e.message)
                 }
@@ -250,12 +289,13 @@ class MainActivity : AppCompatActivity() {
                 onSpeedCalculated(uploadSpeedKbps)
 
                 isUploadTestInProgress = false
-                binding.retryIv.setImageResource(R.drawable.ic_refresh)
-                binding.loader.visibility = View.GONE
+                showHideLoader()
             }
 
         } catch (e: Exception) {
             e.printStackTrace()
+
+            isUploadTestInProgress = false
 
             withContext(Dispatchers.Main) {
                 showErrorCase(e.message)
@@ -264,13 +304,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showErrorCase(error: String?) {
-        binding.errorTv.text = error ?: getString(R.string.general_error_message)
-        binding.errorTv.visibility = View.VISIBLE
-        isDownloadTestInProgress = false
-        isUploadTestInProgress = false
+        mainScope.launch {
+            binding.errorTv.text = error ?: getString(R.string.general_error_message)
+            binding.errorTv.visibility = View.VISIBLE
+        }
 
-        binding.retryIv.setImageResource(R.drawable.ic_refresh)
+        showHideLoader()
+    }
 
-        binding.loader.visibility = View.GONE
+    private fun showHideLoader() {
+        mainScope.launch {
+            if (isTestInProgress) {
+                binding.retryIv.setImageResource(R.drawable.ic_pause_circle_outline)
+                binding.loader.visibility = View.VISIBLE
+            } else {
+                binding.retryIv.setImageResource(R.drawable.ic_refresh)
+                binding.loader.visibility = View.GONE
+            }
+        }
     }
 }
